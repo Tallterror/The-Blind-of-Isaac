@@ -1,0 +1,16 @@
+[manifest]
+version = "1.0.0"
+dump_lua = true
+priority = 0
+
+# Finite le mani non si perde: si continua a pescare finché il blind non è battuto o i cuori finiscono
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "if G.GAME.chips - G.GAME.blind.chips >= 0 or G.GAME.current_round.hands_left < 1 then"
+position = "at"
+payload = '''
+TBOI.FUNCS.resolve_overtime_hand()
+if G.GAME.chips - G.GAME.blind.chips >= 0 or TBOI.FUNCS.is_dead() then
+'''
+match_indent = true

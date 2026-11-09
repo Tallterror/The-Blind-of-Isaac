@@ -1,0 +1,22 @@
+{
+    "descriptions": {
+        "Other": {
+            "spindown_info": {
+                "name": "Spindown",
+                "text": [
+                    "Spindown to",
+                    "{E:2,C:attention}#1#"
+                ]
+            }
+        }
+    },
+    "misc": {
+        "dictionary": {
+            "tboi_custom_round_end_eval": "End of round reward",
+            "tboi_treasure_flavour": "More Items after Every Ante",
+            "tboi_treasure_choise": "Choises Left: ",
+            "k_hud_bombs": "Bombs",
+            "k_hud_keys" : "Keys"
+        }
+    }
+}

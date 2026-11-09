@@ -1,0 +1,14 @@
+{
+	"id": "blindOfIsaac",
+	"name": "The Blind of Isaac",
+	"display_name": "Blind of Isaac",
+	"author": ["Luigi"],
+	"description": "A mod based on the Rogue-Like The Binding of Isaac",
+	"prefix": "tboi",
+	"main_file": "main.lua",
+	"priority": 0,
+	"badge_coluor": "ffe0e0",
+	"badge_text_colour": "ffffff",
+	"version": "1.0.0",
+	"dependencies": ["Steamodded"] 
+}

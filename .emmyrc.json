@@ -1,0 +1,9 @@
+{
+  "diagnostics": {
+    "disable": [
+      "undefined-global",
+      "need-check-nil",
+      "access-invisible"
+    ]
+  }
+}

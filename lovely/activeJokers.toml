@@ -1,0 +1,163 @@
+[manifest]
+version = "1.0.0"
+dump_lua = true
+priority = 0
+
+# Check spacce for buying active jokers in the shop
+[[patches]]
+[patches.pattern]
+target = "functions/button_callbacks.lua"
+pattern = "G.FUNCS.check_for_buy_space = function(card)"
+position = "after"
+payload = '''
+  if card.ability.is_active then
+    if #G.actives.cards < G.actives.config.card_limit + ((card.edition and card.edition.negative) and 1 or 0) then
+      return true
+    else
+      alert_no_space(card, G.actives)
+      return false
+    end
+  end
+'''
+match_indent = true
+
+# Check Space for selecting active jokers in packs
+[[patches]]
+[patches.pattern]
+target = "functions/button_callbacks.lua"
+pattern = "G.FUNCS.can_select_card = function(e)"
+position = "after"
+payload = '''
+    if e.config.ref_table.ability.is_active then
+      if e.config.ref_table.edition and e.config.ref_table.edition.negative or #G.actives.cards < G.actives.config.card_limit then
+        e.config.colour = G.C.GREEN
+        e.config.button = 'use_card'
+      else
+        e.config.colour = G.C.UI.BACKGROUND_INACTIVE
+        e.config.button = nil
+      end
+      return
+    end
+'''
+match_indent = true
+
+# Emplacing active jokers to active area
+[[patches]]
+[patches.pattern]
+target = "functions/button_callbacks.lua"
+pattern = '''
+            if c1.ability.consumeable then
+              G.consumeables:emplace(c1)
+            else
+              G.jokers:emplace(c1)
+            end
+'''
+position = "at"
+payload = '''
+            if c1.ability.consumeable then
+              G.consumeables:emplace(c1)
+            elseif c1.ability.is_active then
+              G.actives:emplace(c1)
+            else
+              G.jokers:emplace(c1)
+            end
+'''
+match_indent = true
+
+#Adding USE button to active jokers
+[[patches]]
+[patches.pattern]
+target = "functions/UI_definitions.lua"
+pattern = '''
+function G.UIDEF.use_and_sell_buttons(card)
+  local sell = nil
+  local use = nil
+'''
+position = "after"
+payload = '''
+  if card.ability.is_active then
+    use =
+    {n=G.UIT.C, config={align = "cr"}, nodes={
+      {n=G.UIT.C, config={ref_table = card, align = "cr",padding = 0.1, r=0.08, minw = 1.25, hover = true, shadow = true, colour = G.C.UI.BACKGROUND_INACTIVE, one_press = true, button = 'use_active', func = 'can_use_active'}, nodes={
+        {n=G.UIT.B, config = {w=0.1,h=0.6}},
+        {n=G.UIT.C, config={align = "tm"}, nodes={
+          {n=G.UIT.R, config={align = "cm", maxw = 1.25}, nodes={
+            {n=G.UIT.T, config={text = localize('b_use'),colour = G.C.UI.TEXT_LIGHT, scale = 0.4, shadow = true}}
+          }},
+          {n=G.UIT.R, config={align = "cm"}, nodes={
+            {n=G.UIT.T, config={ref_table = card.ability, ref_value = 'charge',colour = G.C.WHITE, scale = 0.55, shadow = true}},
+            {n=G.UIT.T, config={text = ' / ',colour = G.C.WHITE, scale = 0.4, shadow = true}},
+            {n=G.UIT.T, config={ref_table = card.ability, ref_value = 'required_charge',colour = G.C.WHITE, scale = 0.55, shadow = true}}
+          }}
+        }}
+      }},
+    }}
+  end
+'''
+match_indent = true
+
+# Adding Use function on cards for active jokers
+[[patches]]
+[patches.copy]
+target = "card.lua"
+position = "append"
+payload = '''
+function Card:can_use_active(any_state, skip_check)
+  if not self.ability.is_active then return false end
+  if not skip_check and ((G.play and #G.play.cards > 0) or
+    (G.CONTROLLER.locked) or
+    (G.GAME.STOP_USE and G.GAME.STOP_USE > 0))
+    then return false end
+  if (G.STATE ~= G.STATES.HAND_PLAYED and G.STATE ~= G.STATES.DRAW_TO_HAND and G.STATE ~= G.STATES.PLAY_TAROT or any_state) and self.ability and self.ability.required_charge and self.ability.charge then
+    return self.ability.required_charge <= self.ability.charge
+  end
+  return false
+end
+'''
+# Adding charge up function
+[[patches]]
+[patches.copy]
+target = "card.lua"
+position = "append"
+payload = '''
+function Card:increment_charge(value)
+  if not self.ability.is_active then return end
+  if self.ability.max_charge <= self.ability.charge then return end
+  if value == nil then
+    value = 1
+  end
+  if self.ability.charge + value > self.ability.max_charge then value = self.ability.max_charge - self.ability.charge end
+  self.ability.charge = self.ability.charge + value
+  SMODS.calculate_effect({ message = "Charge up!" }, self)
+end
+'''
+
+# Add Calculation to the area
+[[patches]]
+[patches.pattern]
+target = '=[SMODS _ "src/utils.lua"]'
+pattern = "-- TARGET: add your own CardAreas for joker evaluation"
+position = "after"
+payload = '''
+if G.actives and G.actives.cards then
+    t[#t+1] = G.actives
+end
+'''
+match_indent = true
+
+# debugplus active jokers emplace
+[[patches]]
+[patches.pattern]
+target = '=[lovely debugplus.core "debugplus/core.lua"]'
+pattern = '''
+if _card.ability.set == 'Joker' then
+  _area = G.jokers
+'''
+position = "at"
+payload = '''
+if _card.ability.is_active then
+  _area = G.actives
+elseif _card.ability.set == 'Joker' then
+  _area = G.jokers
+'''
+match_indent = true
